@@ -5,36 +5,84 @@
 // MODULE: StorageManager
 // Responsibility: Persist and restore decks to/from localStorage
 const StorageManager = {
+  STORAGE_KEY: 'decks',
+  QUOTA_WARNING_KEY: 'quotaWarning',
+
   loadDecks() {
     try {
-      const stored = localStorage.getItem('decks');
-      return stored ? JSON.parse(stored) : [];
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (!stored) {
+        return [];
+      }
+
+      // Validate schema before returning
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) {
+        console.warn('Invalid schema in localStorage; resetting to empty.');
+        return [];
+      }
+
+      // Basic validation: ensure each deck has required fields
+      return parsed.filter(deck => 
+        deck.id && deck.name && Array.isArray(deck.cards)
+      );
     } catch (e) {
-      console.error('Error loading decks:', e);
+      console.error('Error loading decks from localStorage:', e);
       return [];
     }
   },
 
   saveDecks(decks) {
     try {
-      localStorage.setItem('decks', JSON.stringify(decks));
+      if (!Array.isArray(decks)) {
+        console.error('saveDecks received non-array:', decks);
+        return false;
+      }
+
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(decks));
+      localStorage.removeItem(this.QUOTA_WARNING_KEY); // Clear any prior warning
       return true;
     } catch (e) {
-      console.error('Error saving decks:', e);
-      alert('Storage quota exceeded. Please delete some decks.');
+      if (e.name === 'QuotaExceededError') {
+        console.error('localStorage quota exceeded');
+        localStorage.setItem(this.QUOTA_WARNING_KEY, 'true');
+        alert('Storage quota exceeded. Please delete some decks or cards to make space.');
+      } else {
+        console.error('Error saving decks to localStorage:', e);
+      }
       return false;
     }
   },
 
   isQuotaNearFull() {
     try {
-      const test = 'test';
-      localStorage.setItem(test, test);
-      localStorage.removeItem(test);
+      const testKey = '__quota_test__';
+      const testValue = new Array(1024).fill('x').join(''); // 1KB test
+      localStorage.setItem(testKey, testValue);
+      localStorage.removeItem(testKey);
       return false;
     } catch (e) {
       return true;
     }
+  },
+
+  getStorageStats() {
+    try {
+      const used = new Blob(
+        Object.values(localStorage).map(v => v.toString())
+      ).size;
+      return {
+        usedBytes: used,
+        estimatedPercent: (used / (5 * 1024 * 1024)) * 100 // Assume 5MB limit
+      };
+    } catch (e) {
+      return null;
+    }
+  },
+
+  clearAll() {
+    localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem(this.QUOTA_WARNING_KEY);
   }
 };
 
