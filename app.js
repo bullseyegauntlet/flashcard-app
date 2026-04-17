@@ -349,6 +349,8 @@ const UIController = {
   selectedDeckId: null,
   editingCardId: null,
   toast: null,
+  cardsPerPage: 50,
+  currentCardPage: 0,
 
   render() {
     const app = document.getElementById('app');
@@ -444,8 +446,24 @@ const UIController = {
     if (deck.cards.length === 0) {
       html += '<p class="empty-state">No cards yet. Add some to get started!</p>';
     } else {
+      // Pagination for large decks
+      const totalCards = deck.cards.length;
+      const start = this.currentCardPage * this.cardsPerPage;
+      const end = Math.min(start + this.cardsPerPage, totalCards);
+      const paginatedCards = deck.cards.slice(start, end);
+      const totalPages = Math.ceil(totalCards / this.cardsPerPage);
+
+      // Show pagination info if many cards
+      if (totalCards > this.cardsPerPage) {
+        html += `
+          <div class="pagination-info">
+            Showing ${start + 1}-${end} of ${totalCards} cards
+          </div>
+        `;
+      }
+
       html += '<div class="card-list">';
-      deck.cards.forEach(card => {
+      paginatedCards.forEach(card => {
         const knownBadge = card.known ? '<span class="badge badge-known">✓ Known</span>' : '<span class="badge">Not reviewed</span>';
         html += `
           <div class="card-item">
@@ -462,6 +480,17 @@ const UIController = {
         `;
       });
       html += '</div>';
+
+      // Pagination controls
+      if (totalPages > 1) {
+        html += `
+          <div class="pagination-controls">
+            <button class="btn btn-small" onclick="UIController.previousCardPage()" ${this.currentCardPage === 0 ? 'disabled' : ''}>← Previous</button>
+            <span class="pagination-indicator">Page ${this.currentCardPage + 1}/${totalPages}</span>
+            <button class="btn btn-small" onclick="UIController.nextCardPage()" ${this.currentCardPage >= totalPages - 1 ? 'disabled' : ''}>Next →</button>
+          </div>
+        `;
+      }
     }
 
     html += '</div>';
@@ -520,12 +549,30 @@ const UIController = {
   viewDeck(deckId) {
     this.currentView = 'deck';
     this.selectedDeckId = deckId;
+    this.currentCardPage = 0; // Reset pagination
     this.render();
+  },
+
+  previousCardPage() {
+    if (this.currentCardPage > 0) {
+      this.currentCardPage--;
+      this.render();
+    }
+  },
+
+  nextCardPage() {
+    const deck = DeckManager.getDeckById(this.selectedDeckId);
+    const totalPages = Math.ceil(deck.cards.length / this.cardsPerPage);
+    if (this.currentCardPage < totalPages - 1) {
+      this.currentCardPage++;
+      this.render();
+    }
   },
 
   backToHome() {
     this.currentView = 'home';
     this.selectedDeckId = null;
+    this.currentCardPage = 0; // Reset pagination
     this.render();
   },
 
