@@ -2,11 +2,11 @@
 
 **PRD:** Embedded in Silvia task
 **Started:** 2026-04-17 12:22 CDT
-**Last Updated:** 2026-04-17 12:42 CDT
+**Last Updated:** 2026-04-17 12:48 CDT
 **Overall Status:** IN PROGRESS
-**Total Tokens Used:** 38.8k
-**Estimated Cost:** $0.14
-**Next Action:** Spawn Nico to set up GitHub repo + Netlify deployment infrastructure
+**Total Tokens Used:** 97.0k
+**Estimated Cost:** $0.37
+**Next Action:** Spawn Amelia for Story 1.1 (Create Deck) — implementation phase begins
 
 ---
 
@@ -16,19 +16,19 @@
 |---|-------|------|-------|------------|--------|--------|------|---------|
 | 1 | planning | Decompose PRD into stories | John | — | DONE | 11.3k | $0.04 | receipts/john-prd-20260417-123926.md |
 | 2 | planning | Define architecture | Winston | #1 | DONE | 27.5k | $0.10 | receipts/winston-arch-20260417-174218.md |
-| 3 | infra | Set up GitHub repo + Netlify | Nico | #2 | IN PROGRESS | — | — | — |
-| 4A | frontend | Story 1: Create Deck UI | Amelia | #2, #3 | PENDING | — | — | — |
-| 4B | frontend | Story 2: Deck View & Edit | Amelia | #2, #3 | PENDING | — | — | — |
-| 4C | frontend | Story 3: Study Mode Screen | Amelia | #2, #3 | PENDING | — | — | — |
-| 4D | backend | Story 4: Card Logic & Shuffle | Amelia | #2, #3 | PENDING | — | — | — |
-| 4E | backend | Story 5: localStorage Persistence | Amelia | #2, #3 | PENDING | — | — | — |
+| 3 | infra | Set up GitHub repo + Netlify | Nico | #2 | DONE | 58.2k | $0.23 | receipts/nico-infra-20260417-1248.md |
+| 4A | frontend | Story 1.1-1.5: Deck Management | Amelia | #2, #3 | IN PROGRESS | — | — | — |
+| 4B | frontend | Story 2.1-2.5: Study Mode | Amelia | #4A | PENDING | — | — | — |
+| 4C | backend | Story 3.1: Shuffle | Amelia | #4A | PENDING | — | — | — |
+| 4D | backend | Story 4.1-4.3: Progress Tracking | Amelia | #4A | PENDING | — | — | — |
+| 4E | backend | Story 6.1-6.3: Persistence | Amelia | #4A | PENDING | — | — | — |
 | 5 | docs | README & Deployment Guide | Paige | #3 | PENDING | — | — | — |
 
 ---
 
 ## Active Tasks
 
-- **Nico (infrastructure)**: Spawning now to set up GitHub repo + Netlify deployment.
+- **Amelia (implementation)**: Spawning now for Story 1 (Deck Management).
 
 ---
 
@@ -53,6 +53,19 @@
 - **Artifacts:**
   - `/architecture.md` — full architecture spec with modules, ADRs, implementation checklist
   - `/receipts/winston-arch-20260417-174218.md` — full receipt
+
+### Task #3 — Set up GitHub + Netlify
+- **Agent:** Nico (Contractor)
+- **Status:** DONE
+- **Tokens:** 58.2k
+- **Summary:** GitHub repo created (bullseyegauntlet/flashcard-app), initialized with scaffold files, Netlify connected and live.
+- **GitHub:** https://github.com/bullseyegauntlet/flashcard-app
+- **Netlify:** https://comforting-sorbet-b114de.netlify.app ✅ (live, showing placeholder UI)
+- **Cost:** $0.00 (free tier)
+- **Manual step remaining:** Connect GitHub auto-deploy in Netlify dashboard (one-time OAuth)
+- **Artifacts:**
+  - GitHub repo with initial commit
+  - `/receipts/nico-infra-20260417-1248.md` — full receipt
 
 ---
 
