@@ -316,6 +316,32 @@ const StudySession = {
   }
 };
 
+// MODULE: ProgressTracker
+// Responsibility: Track and display progress
+const ProgressTracker = {
+  getProgress(deck) {
+    if (!deck || deck.cards.length === 0) {
+      return { known: 0, total: 0, percent: 0 };
+    }
+    const known = deck.cards.filter(c => c.known).length;
+    const total = deck.cards.length;
+    const percent = Math.round((known / total) * 100);
+    return { known, total, percent };
+  },
+
+  resetProgress(deckId) {
+    const deck = DeckManager.getDeckById(deckId);
+    if (!deck) return false;
+    
+    deck.cards.forEach(card => {
+      card.known = false;
+    });
+    
+    StorageManager.saveDecks(DeckManager.decks);
+    return true;
+  }
+};
+
 // MODULE: UIController
 // Responsibility: Render UI and handle user interactions
 const UIController = {
@@ -352,16 +378,21 @@ const UIController = {
     } else {
       html += '<div class="deck-list">';
       decks.forEach(deck => {
-        const cardCount = deck.cards.length;
-        const knownCount = deck.cards.filter(c => c.known).length;
+        const progress = ProgressTracker.getProgress(deck);
+        const progressBar = `
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${progress.percent}%"></div>
+          </div>
+          <p class="progress-text">${progress.percent}% (${progress.known}/${progress.total} cards known)</p>
+        `;
         html += `
           <div class="deck-card">
             <div class="deck-info">
               <h3>${this.escapeHtml(deck.name)}</h3>
-              <p>${cardCount} cards | ${knownCount} known</p>
+              ${progressBar}
             </div>
             <div class="deck-actions">
-              <button class="btn btn-small" onclick="UIController.viewDeck('${deck.id}')">Study</button>
+              <button class="btn btn-small" onclick="UIController.startStudyWithOptions('${deck.id}')">Study</button>
               <button class="btn btn-small btn-edit" onclick="UIController.viewDeck('${deck.id}')">Manage</button>
               <button class="btn btn-small btn-danger" onclick="UIController.confirmDeleteDeck('${deck.id}')">Delete</button>
             </div>
@@ -383,12 +414,19 @@ const UIController = {
       return;
     }
 
+    const progress = ProgressTracker.getProgress(deck);
+
     let html = `
       <div class="deck-screen">
         <div class="deck-header">
           <button class="btn btn-secondary" onclick="UIController.backToHome()">&larr; Back</button>
           <h1>${this.escapeHtml(deck.name)}</h1>
           <p>${deck.cards.length} cards</p>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${progress.percent}%"></div>
+          </div>
+          <p class="progress-text">${progress.percent}% (${progress.known}/${progress.total} cards known)</p>
+          ${progress.known > 0 ? `<button class="btn btn-small btn-reset" onclick="UIController.confirmResetProgress('${deck.id}')">Reset Progress</button>` : ''}
         </div>
 
         <div class="deck-actions">
@@ -640,6 +678,14 @@ const UIController = {
       StudySession.end();
       this.currentView = 'deck';
       this.render();
+    }
+  },
+
+  confirmResetProgress(deckId) {
+    if (confirm('Reset progress for this deck? All cards will be marked as "unknown".')) {
+      ProgressTracker.resetProgress(deckId);
+      this.render();
+      this.showToast('Progress reset!', 'info');
     }
   },
 
