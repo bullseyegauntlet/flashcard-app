@@ -1,0 +1,13 @@
+{
+  "name": "flashcard-app",
+  "version": "1.0.0",
+  "description": "A browser-based flashcard app with localStorage persistence",
+  "main": "index.html",
+  "scripts": {
+    "dev": "open index.html",
+    "build": "echo 'No build step needed for vanilla JS'"
+  },
+  "keywords": ["flashcards", "study", "learning"],
+  "author": "Gauntlet AI",
+  "license": "MIT"
+}
