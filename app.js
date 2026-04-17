@@ -204,12 +204,102 @@ const DeckManager = {
   }
 };
 
+// MODULE: StudySession
+// Responsibility: Manage study mode state and card progression
+const StudySession = {
+  deckId: null,
+  cards: [],
+  currentCardIndex: 0,
+  isFlipped: false,
+  isAnswered: false,
+
+  start(deckId) {
+    const deck = DeckManager.getDeckById(deckId);
+    if (!deck || deck.cards.length === 0) {
+      alert('Deck is empty. Add some cards first.');
+      return false;
+    }
+
+    this.deckId = deckId;
+    this.cards = [...deck.cards]; // Copy cards for this session
+    this.currentCardIndex = 0;
+    this.isFlipped = false;
+    this.isAnswered = false;
+    return true;
+  },
+
+  getCurrentCard() {
+    if (this.currentCardIndex >= this.cards.length) {
+      return null;
+    }
+    return this.cards[this.currentCardIndex];
+  },
+
+  flip() {
+    this.isFlipped = !this.isFlipped;
+  },
+
+  markKnown() {
+    const card = this.getCurrentCard();
+    if (!card) return;
+
+    // Update card in DeckManager
+    DeckManager.editCard(this.deckId, card.id, card.front, card.back);
+    DeckManager.decks.find(d => d.id === this.deckId)
+      .cards.find(c => c.id === card.id).known = true;
+    StorageManager.saveDecks(DeckManager.decks);
+
+    this.isAnswered = true;
+    return true;
+  },
+
+  markReview() {
+    const card = this.getCurrentCard();
+    if (!card) return;
+
+    // Ensure known=false (already is, but be explicit)
+    DeckManager.decks.find(d => d.id === this.deckId)
+      .cards.find(c => c.id === card.id).known = false;
+    StorageManager.saveDecks(DeckManager.decks);
+
+    this.isAnswered = true;
+    return true;
+  },
+
+  advance() {
+    this.currentCardIndex++;
+    this.isFlipped = false;
+    this.isAnswered = false;
+  },
+
+  isComplete() {
+    return this.currentCardIndex >= this.cards.length;
+  },
+
+  getProgress() {
+    return {
+      current: this.currentCardIndex + 1,
+      total: this.cards.length,
+      percent: Math.round((this.currentCardIndex / this.cards.length) * 100)
+    };
+  },
+
+  end() {
+    this.deckId = null;
+    this.cards = [];
+    this.currentCardIndex = 0;
+    this.isFlipped = false;
+    this.isAnswered = false;
+  }
+};
+
 // MODULE: UIController
 // Responsibility: Render UI and handle user interactions
 const UIController = {
   currentView: 'home',
   selectedDeckId: null,
   editingCardId: null,
+  toast: null,
 
   render() {
     const app = document.getElementById('app');
@@ -218,6 +308,10 @@ const UIController = {
       this.renderHomeScreen(app);
     } else if (this.currentView === 'deck') {
       this.renderDeckScreen(app);
+    } else if (this.currentView === 'study') {
+      this.renderStudyScreen(app);
+    } else if (this.currentView === 'study-complete') {
+      this.renderStudyCompleteScreen(app);
     }
   },
 
@@ -276,6 +370,7 @@ const UIController = {
 
         <div class="deck-actions">
           <button class="btn btn-primary" onclick="UIController.showAddCardForm()">+ Add Card</button>
+          <button class="btn btn-study" onclick="UIController.startStudy('${deck.id}')">📖 Study Deck</button>
         </div>
     `;
 
@@ -365,6 +460,153 @@ const UIController = {
     this.currentView = 'home';
     this.selectedDeckId = null;
     this.render();
+  },
+
+  renderStudyScreen(app) {
+    const card = StudySession.getCurrentCard();
+    const progress = StudySession.getProgress();
+    const deck = DeckManager.getDeckById(StudySession.deckId);
+
+    if (!card) {
+      this.currentView = 'study-complete';
+      this.render();
+      return;
+    }
+
+    const cardClass = StudySession.isFlipped ? 'flipped' : '';
+    const knownCountInDeck = deck.cards.filter(c => c.known).length;
+
+    let html = `
+      <div class="study-screen">
+        <div class="study-header">
+          <button class="btn btn-secondary" onclick="UIController.exitStudy()">&larr; Exit</button>
+          <h2>${this.escapeHtml(deck.name)} - Study Mode</h2>
+          <div class="study-progress">
+            Card ${progress.current}/${progress.total}
+            | ${knownCountInDeck}/${deck.cards.length} known (${Math.round((knownCountInDeck / deck.cards.length) * 100)}%)
+          </div>
+        </div>
+
+        <div class="study-container">
+          <div class="card-container ${cardClass}" onclick="UIController.flipCard()">
+            <div class="card-inner">
+              <div class="card-front">
+                <p>${this.escapeHtml(card.front)}</p>
+                <p class="card-hint">Click to reveal answer</p>
+              </div>
+              <div class="card-back">
+                <p>${this.escapeHtml(card.back)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="study-actions">
+          ${!StudySession.isFlipped ? `
+            <p class="text-center">Click the card to flip and see the answer.</p>
+          ` : `
+            <button class="btn btn-danger btn-lg" onclick="UIController.reviewAgain()">📌 Review Again</button>
+            <button class="btn btn-primary btn-lg" onclick="UIController.markKnown()">✓ Know It!</button>
+          `}
+        </div>
+      </div>
+    `;
+
+    app.innerHTML = html;
+  },
+
+  renderStudyCompleteScreen(app) {
+    const deck = DeckManager.getDeckById(StudySession.deckId);
+    const knownCount = deck.cards.filter(c => c.known).length;
+    const total = deck.cards.length;
+    const percent = Math.round((knownCount / total) * 100);
+
+    let html = `
+      <div class="study-complete-screen">
+        <div class="complete-card">
+          <h1>🎉 Study Complete!</h1>
+          <p>Deck: <strong>${this.escapeHtml(deck.name)}</strong></p>
+          <div class="complete-stats">
+            <div class="stat">
+              <span class="stat-label">Cards Studied:</span>
+              <span class="stat-value">${total}</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Cards Known:</span>
+              <span class="stat-value" style="color: #4CAF50;">${knownCount}</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Progress:</span>
+              <span class="stat-value">${percent}%</span>
+            </div>
+          </div>
+          <div class="complete-actions">
+            <button class="btn btn-primary btn-lg" onclick="UIController.startStudy('${StudySession.deckId}')">
+              Study Again
+            </button>
+            <button class="btn btn-secondary btn-lg" onclick="UIController.backToHome()">
+              Back to Home
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    app.innerHTML = html;
+  },
+
+  flipCard() {
+    if (StudySession.isAnswered) return; // Prevent flipping after answering
+    StudySession.flip();
+    this.render();
+  },
+
+  startStudy(deckId) {
+    if (StudySession.start(deckId)) {
+      this.currentView = 'study';
+      this.selectedDeckId = deckId;
+      this.render();
+    }
+  },
+
+  markKnown() {
+    StudySession.markKnown();
+    this.showToast('✓ Marked as known!', 'success');
+    
+    setTimeout(() => {
+      StudySession.advance();
+      this.currentView = StudySession.isComplete() ? 'study-complete' : 'study';
+      this.render();
+    }, 500);
+  },
+
+  reviewAgain() {
+    StudySession.markReview();
+    this.showToast('📌 Marked for review', 'info');
+    
+    setTimeout(() => {
+      StudySession.advance();
+      this.currentView = StudySession.isComplete() ? 'study-complete' : 'study';
+      this.render();
+    }, 500);
+  },
+
+  exitStudy() {
+    if (confirm('Exit study mode? Progress will be saved.')) {
+      StudySession.end();
+      this.currentView = 'deck';
+      this.render();
+    }
+  },
+
+  showToast(message, type = 'info') {
+    const app = document.getElementById('app');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    app.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 2000);
   },
 
   escapeHtml(text) {

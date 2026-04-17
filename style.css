@@ -233,6 +233,244 @@ body {
   white-space: nowrap;
 }
 
+/* STUDY MODE SCREEN */
+.study-screen {
+  width: 100%;
+}
+
+.study-header {
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  text-align: center;
+}
+
+.study-header h2 {
+  color: #333;
+  margin: 10px 0 10px 0;
+  font-size: 1.6rem;
+}
+
+.study-progress {
+  color: #666;
+  font-size: 0.95rem;
+  margin-top: 8px;
+}
+
+.study-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 60px 0;
+  perspective: 1000px;
+}
+
+.card-container {
+  width: 100%;
+  max-width: 500px;
+  height: 300px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.card-container.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.card-container.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  backface-visibility: hidden;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  font-size: 1.3rem;
+  line-height: 1.6;
+}
+
+.card-front {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.card-front p {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.card-hint {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 20px;
+}
+
+.card-back {
+  background: white;
+  border: 2px solid #667eea;
+  color: #333;
+  transform: rotateY(180deg);
+}
+
+.study-actions {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.btn-lg {
+  padding: 15px 40px;
+  font-size: 1.1rem;
+  width: 100%;
+  max-width: 250px;
+}
+
+.btn-study {
+  background-color: #667eea;
+  color: white;
+}
+
+.btn-study:hover {
+  background-color: #5568d3;
+}
+
+.text-center {
+  text-align: center;
+  color: #666;
+}
+
+/* STUDY COMPLETE SCREEN */
+.study-complete-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.complete-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 60px 40px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+}
+
+.complete-card h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+.complete-card p {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+}
+
+.complete-stats {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 30px;
+  margin-bottom: 30px;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.complete-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.complete-actions .btn {
+  background-color: white;
+  color: #667eea;
+  font-weight: bold;
+}
+
+.complete-actions .btn:hover {
+  background-color: #f0f0f0;
+}
+
+.complete-actions .btn-secondary {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.complete-actions .btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* TOAST NOTIFICATIONS */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #333;
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+  z-index: 9999;
+}
+
+.toast-success {
+  background-color: #4CAF50;
+}
+
+.toast-info {
+  background-color: #2196F3;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 /* RESPONSIVE */
 @media (max-width: 600px) {
   .deck-list {
@@ -252,5 +490,32 @@ body {
 
   .card-actions .btn {
     flex: 1;
+  }
+
+  .card-front,
+  .card-back {
+    height: 250px;
+    font-size: 1rem;
+    padding: 30px;
+  }
+
+  .card-front p {
+    font-size: 1.2rem;
+  }
+
+  .study-actions {
+    flex-direction: column;
+  }
+
+  .btn-lg {
+    max-width: 100%;
+  }
+
+  .complete-card {
+    padding: 40px 20px;
+  }
+
+  .complete-card h1 {
+    font-size: 1.8rem;
   }
 }
