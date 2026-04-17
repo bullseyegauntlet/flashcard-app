@@ -204,6 +204,20 @@ const DeckManager = {
   }
 };
 
+// MODULE: ShuffleEngine
+// Responsibility: Randomize card order for study sessions
+const ShuffleEngine = {
+  shuffle(array) {
+    // Fisher-Yates shuffle algorithm
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+};
+
 // MODULE: StudySession
 // Responsibility: Manage study mode state and card progression
 const StudySession = {
@@ -212,8 +226,9 @@ const StudySession = {
   currentCardIndex: 0,
   isFlipped: false,
   isAnswered: false,
+  isShuffle: false,
 
-  start(deckId) {
+  start(deckId, shouldShuffle = false) {
     const deck = DeckManager.getDeckById(deckId);
     if (!deck || deck.cards.length === 0) {
       alert('Deck is empty. Add some cards first.');
@@ -221,7 +236,15 @@ const StudySession = {
     }
 
     this.deckId = deckId;
-    this.cards = [...deck.cards]; // Copy cards for this session
+    let cardsCopy = [...deck.cards]; // Copy cards for this session
+    
+    // Apply shuffle if requested
+    if (shouldShuffle) {
+      cardsCopy = ShuffleEngine.shuffle(cardsCopy);
+    }
+
+    this.cards = cardsCopy;
+    this.isShuffle = shouldShuffle;
     this.currentCardIndex = 0;
     this.isFlipped = false;
     this.isAnswered = false;
@@ -370,7 +393,13 @@ const UIController = {
 
         <div class="deck-actions">
           <button class="btn btn-primary" onclick="UIController.showAddCardForm()">+ Add Card</button>
-          <button class="btn btn-study" onclick="UIController.startStudy('${deck.id}')">📖 Study Deck</button>
+          <div class="study-controls">
+            <label class="checkbox-label">
+              <input type="checkbox" id="shuffle-toggle" onchange="UIController.updateShuffleState()">
+              🔀 Shuffle
+            </label>
+            <button class="btn btn-study" onclick="UIController.startStudyWithOptions('${deck.id}')">📖 Study Deck</button>
+          </div>
         </div>
     `;
 
@@ -567,6 +596,21 @@ const UIController = {
       this.selectedDeckId = deckId;
       this.render();
     }
+  },
+
+  startStudyWithOptions(deckId) {
+    const shuffleToggle = document.getElementById('shuffle-toggle');
+    const shouldShuffle = shuffleToggle ? shuffleToggle.checked : false;
+    
+    if (StudySession.start(deckId, shouldShuffle)) {
+      this.currentView = 'study';
+      this.selectedDeckId = deckId;
+      this.render();
+    }
+  },
+
+  updateShuffleState() {
+    // Just toggle checkbox state; actual shuffle happens on study start
   },
 
   markKnown() {
